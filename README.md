@@ -113,7 +113,7 @@ A compiler with C++17 support
 For the bare sorting functionality no dependencies are required. If you want to run the tests, the Google Tests framework is required, which is contained in this repository as GIT submodule.
 
 ## Limitations
-Depending on the implementation of the comparator the performance advantage of a sorting net compared to a regular sorting algorithm (e.g. `std::sort`) may diminish or even result in worse performance. This can be seen in the [interactive benchmark results overview](https://raw.githack.com/TheGrumpyCoda/SortingNetworkCpp/master/doc/data_explorer.htm) for the data type `Vec2i Z-order` which causes in most cases all variants of sorting networks being outperformed by `std::sort` (see [src/benchmark.cpp]([src/benchmark.cpp]) for the implementation of the aforementioned data type).
+Depending on the implementation of the comparator the performance advantage of a sorting net compared to a regular sorting algorithm (e.g. `std::sort`) may diminish or even result in worse performance. This can be seen in the [interactive benchmark results overview](https://raw.githack.com/TheGrumpyCoda/SortingNetworkCpp/master/doc/data_explorer.htm) for the data type `Vec2i Z-order` which causes in most cases all variants of sorting networks being outperformed by `std::sort` (see [src/benchmark.cpp](src/benchmark.cpp) for the implementation of the aforementioned data type).
 
 ## Known issues
 * Compiling with `-ffast-math` using clang 10.0, performance for floating point types worsens a lot
