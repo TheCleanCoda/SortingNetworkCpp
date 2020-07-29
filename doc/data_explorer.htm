@@ -1,0 +1,374 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>SortingNetworkCpp performance charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.2.0"></script>
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        body {
+            font-family: Verdana, Helvetica, sans-serif;
+            background-color: #1D1E22;
+            color: white;
+        }
+        
+        input[type=radio] {
+            display: none;
+            margin: 10px;
+        }
+        
+        .rb_group_label {
+            display: block;
+            padding-bottom: 0.25em;
+            padding-right: 1em;
+        }
+        
+        .rb_group_container {
+            display: block;
+        }
+        
+        .container {
+            display: flex;
+        }
+        
+        .option_pane {
+            text-align: justify;
+        }
+        
+        .chart_pane {
+            position: relative;
+        }
+        
+        .selectors {
+            text-align: left;
+            border-spacing: 10px;
+            border-collapse: separate
+        }
+        
+        a:link,
+        a:visited,
+        a:hover,
+        a:active {
+            color: #5A5F73;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        input[type=radio]+label {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #444857;
+            color: white;
+        }
+        
+        input[type=radio]:checked+label {
+            background-image: none;
+            background-color: #47CF73;
+            color: black;
+        }
+        
+        @media screen and (orientation: portrait) {
+            .container {
+                flex-direction: column;
+            }
+            .option_pane {
+                width: 100%;
+                padding-bottom: 2em;
+            }
+            .chart_pane {
+                left: 5wh;
+                top: 0vh;
+                height: 60vh;
+                width: 90vw;
+            }
+        }
+        
+        @media screen and (orientation: landscape) {
+            .container {
+                flex-direction: row;
+            }
+            .option_pane {
+                padding: 2em;
+                width: 30%;
+            }
+            .chart_pane {
+                padding: 2em;
+                width: 70%;
+                top: 10vh;
+                height: 80vh;
+                width: 80vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="option_pane">
+            <p>In this pane you can explore the benchmark data for the various implemented sorting networks (and std::sort) for different compilers, data types and problem sizes.</br>The graph shows the execution time for sorting one million random filled
+                arrays of size N sequentially.
+            </p>
+            <p>All measurements have been taken on an AMD Ryzen 7 2700x @3.70 GHz</p>
+
+            <table class="selectors w3-table">
+                <tr>
+                    <td>
+                        <div class="rb_group_label"><b>Compiler:</b></div>
+                    </td>
+                    <td>
+                        <div class="rb_group_container" id="compilers_container">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="rb_group_label"><b>Data type:</b></div>
+                    </td>
+                    <td>
+                        <div class="rb_group_container" id="data_types_container">
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="container" class="chart_pane">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+    </div>
+    <script>
+        var algorithmNames = [];
+        var chartData = {}
+        var axisValues = []
+        var selectedCompiler = ""
+        var selectedDataType = ""
+        var maxValue = 0;
+
+        let chartColors = [
+            'rgb(255, 99, 132)',
+            'rgb(255, 159, 64)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+            'rgb(201, 203, 207)'
+        ];
+
+        let barChartData = {
+            labels: axisValues,
+            datasets: []
+        };
+
+        function ShowData() {
+            if (window.BarChart === undefined) {
+                Chart.defaults.global.defaultFontColor = 'white';
+                Chart.defaults.global.defaultFontFamily = 'Verdana, Helvetica, sans-serif';
+                var ctx = document.getElementById('chartCanvas').getContext('2d');
+                window.BarChart = new Chart(ctx, {
+                    type: 'line',
+                    data: barChartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: {
+                            position: 'top',
+                        },
+                        scales: {
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: "Execution time (ms)",
+                                    fontStyle: "bold"
+                                },
+                                type: 'logarithmic',
+                                ticks: {
+                                    min: 10,
+                                    max: maxValue,
+                                    callback: function(value, index, values) {
+                                        if (value == 10 || value == 100 || value == 1000 || value == 10000 || value == 100000 || value == 1000000) {
+                                            return value;
+                                        }
+                                    }
+                                },
+                                gridLines: {
+                                    color: '#444956',
+                                    zeroLineColor: '#444956'
+                                }
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: "N",
+                                    fontStyle: "bold"
+                                },
+                                gridLines: {
+                                    color: '#444956',
+                                    zeroLineColor: '#444956'
+                                }
+                            }]
+                        }
+                    }
+                });
+            }
+
+            let genValues = function(i) {
+                var values = []
+                for (key in chartData[selectedCompiler][selectedDataType]) {
+                    let arr = chartData[selectedCompiler][selectedDataType][key];
+
+                    let t = parseFloat(arr[i + 1]);
+
+                    if (isNaN(t))
+                        continue;
+
+                    values.push({
+                        x: arr[0],
+                        y: t
+                    })
+                }
+
+                return values;
+            }
+
+            if (barChartData.datasets.length == 0) {
+                barChartData.datasets = []
+
+                for (i = 0; i < algorithmNames.length; ++i) {
+                    var dataSet = {
+                        "label": algorithmNames[i],
+                        "backgroundColor": chartColors[i],
+                        "borderColor": chartColors[i],
+                        "fill": false,
+                        "cubicInterpolationMode": "monotone"
+                    };
+
+
+                    dataSet["data"] = genValues(i);
+                    barChartData.datasets.push(dataSet);
+                }
+            } else {
+                for (i = 0; i < algorithmNames.length; ++i) {
+                    barChartData.datasets[i]["data"] = genValues(i);
+                }
+            }
+            window.BarChart.update()
+        }
+
+        function LoadAndParseData() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    let t = Papa.parse(xhttp.responseText.replace(/^\s*[\r\n]/gm, ''));
+
+                    if (t.errors.length)
+                        return;
+
+                    let rawParsed = t.data;
+                    let data = {};
+
+                    for (i = 0; i < rawParsed.length; i++) {
+                        if (rawParsed[i].length < 4)
+                            continue;
+
+                        if (i == 0) {
+                            algorithmNames = rawParsed[i].slice(3);
+                            continue;
+                        }
+
+                        let compiler = rawParsed[i][0];
+                        let dataType = rawParsed[i][1];
+                        let timings = rawParsed[i].slice(2);
+
+                        for (let i = 1; i < timings.length; ++i)
+                            maxValue = Math.max(maxValue, timings[i])
+
+                        if (!(compiler in data))
+                            data[compiler] = {}
+
+                        if (!(dataType in data[compiler]))
+                            data[compiler][dataType] = []
+
+
+                        data[compiler][dataType].push(timings);
+                    }
+
+                    chartData = data;
+
+                    let compilersElement = document.getElementById("compilers_container");
+
+                    for (let key in data) {
+                        var radio = document.createElement("INPUT");
+                        radio.setAttribute("type", "radio");
+                        radio.setAttribute("id", key);
+                        radio.setAttribute("name", "compiler");
+                        radio.setAttribute("value", key);
+                        radio.addEventListener('change', function() {
+                            selectedCompiler = key;
+                            ShowData();
+                        });
+
+                        if (selectedCompiler.length == 0) {
+                            selectedCompiler = key;
+                            radio.checked = true;
+                        }
+
+                        var label = document.createElement("LABEL");
+                        label.setAttribute("for", key);
+                        label.innerText = key;
+                        compilersElement.append(radio);
+                        compilersElement.append(label);
+                    }
+
+                    compilersElement.append(document.createElement("BR"));
+
+                    for (let key in data[Object.keys(data)[0]]) {
+                        var radio = document.createElement("INPUT");
+                        radio.setAttribute("type", "radio");
+                        radio.setAttribute("id", key);
+                        radio.setAttribute("name", "data_type");
+                        radio.setAttribute("value", key);
+                        radio.addEventListener('change', function() {
+                            selectedDataType = key;
+                            ShowData();
+                        });
+
+                        if (selectedDataType.length == 0) {
+                            selectedDataType = key;
+                            radio.checked = true;
+                            for (let val in data[Object.keys(data)[0]][key]) {
+                                axisValues.push(data[Object.keys(data)[0]][key][val][0]);
+                            }
+                        }
+
+                        var label = document.createElement("LABEL");
+                        label.setAttribute("for", key);
+                        label.innerText = key;
+                        data_types_container.append(radio);
+                        data_types_container.append(label);
+                    }
+
+                    ShowData();
+                }
+            };
+
+            xhttp.open("GET", "benchmark_timings.csv", true);
+            xhttp.send();
+        }
+
+        window.onload = function() {
+            LoadAndParseData()
+        };
+    </script>
+</body>
+
+</html>
