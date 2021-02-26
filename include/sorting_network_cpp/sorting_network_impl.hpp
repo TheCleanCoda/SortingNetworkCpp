@@ -10,7 +10,13 @@
 #include <algorithm>
 #include <tuple>
 
-namespace the_grumpy_coda
+#if defined(__NVCC__)
+#define TCC_CUDA __host__ __device__
+#else
+#define TCC_CUDA
+#endif
+
+namespace tcc
 {
   enum class NetworkType
   {
@@ -25,7 +31,7 @@ namespace the_grumpy_coda
   template <typename T, typename C>
   struct CompareAndSwap
   {
-    void operator()(T& a, T& b, C comp) const
+    TCC_CUDA void operator()(T& a, T& b, C comp) const
     {
       T t = comp(a, b) ? a : b;
       b = comp(a, b) ? b : a;
@@ -163,7 +169,7 @@ namespace the_grumpy_coda
       static_assert(N >= 1);
 
       template <typename T, typename C>
-      void operator()(T* ptr, C comp) const
+      TCC_CUDA void operator()(T* ptr, C comp) const
       {
         PStar<T, C, 1, N>(ptr, comp);
       }
@@ -171,7 +177,7 @@ namespace the_grumpy_coda
     private:
 
       template <typename T, typename C, int Lo, int N_>
-      void PStar(T* ptr, C comp) const
+      TCC_CUDA void PStar(T* ptr, C comp) const
       {
         // Expansion of recursive formula at 5.1i (P*)
         constexpr int M = N_ / 2;
@@ -186,7 +192,7 @@ namespace the_grumpy_coda
       }
 
       template <typename T, typename C, int I, int J, int X, int Y>
-      void P(T* ptr, C comp) const
+      TCC_CUDA void P(T* ptr, C comp) const
       {
         if constexpr (X == 1 && Y == 1)
         {
@@ -214,7 +220,7 @@ namespace the_grumpy_coda
       }
 
       template <typename T, typename C, int I0, int I1>
-      void Swap(T* ptr, C comp) const
+      TCC_CUDA void Swap(T* ptr, C comp) const
       {
         CompareAndSwap<T, C>()(ptr[I0], ptr[I1], comp);
       }

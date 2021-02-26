@@ -12,7 +12,7 @@
 
 #include "sorting_network_cpp/sorting_network.hpp"
 
-namespace the_grumpy_coda
+namespace tcc
 {
 
 static constexpr size_t MaxN = 16;

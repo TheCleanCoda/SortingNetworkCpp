@@ -12,7 +12,7 @@
 
 #include "sorting_network_cpp/sorting_network_impl.hpp"
 
-namespace the_grumpy_coda
+namespace tcc
 {
   template <size_t N, NetworkType NWT = NetworkType::BoseNelsonSort>
   class SortingNetwork
@@ -39,7 +39,7 @@ namespace the_grumpy_coda
     }
 
     template <typename T, typename ComparatorT>
-    void operator()(T* ptr, ComparatorT comp) const
+    TCC_CUDA void operator()(T* ptr, ComparatorT comp) const
     {
       if constexpr (N > 1)
         details::SortingNetworkImpl<N, NWT>()(ptr, comp);

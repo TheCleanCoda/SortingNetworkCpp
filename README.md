@@ -27,7 +27,7 @@ Following listing gives a few examples:
 
 void Example()
 {
-  using namespace the_grumpy_coda;
+  using namespace tcc;
 
   static constexpr int N = 16;
 
@@ -87,7 +87,7 @@ The compare and swap operation is the fundamental element a sorting network is c
 #include "sorting_network_cpp/sorting_network.hpp"
 #include <array>
 
-namespace the_grumpy_coda
+namespace tcc
 {
   template <typename C>
   struct CompareAndSwap<float, C>
@@ -101,8 +101,8 @@ namespace the_grumpy_coda
 
 void Example(std::array<float,3>& arr)
 {
-  using namespace the_grumpy_coda;
-  the_grumpy_coda::SortingNetwork<arr.size()>()(arr); // will use the specialized CompareAndSwap implementation
+  using namespace tcc;
+  tcc::SortingNetwork<arr.size()>()(arr); // will use the specialized CompareAndSwap implementation
 }
 ```
 

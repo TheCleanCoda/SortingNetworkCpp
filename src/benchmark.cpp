@@ -24,7 +24,7 @@ void Benchmark(std::index_sequence<Indices...>)
   ((BenchmarkN<T, Comp, Indices>()), ...);
 }
 
-namespace the_grumpy_coda
+namespace tcc
 {
   template <typename C>
   struct CompareAndSwap<float, C>
@@ -51,7 +51,7 @@ int main(int argc, const char** args)
 
   std::cout << std::endl;
 
-  constexpr auto seq = std::make_index_sequence<8>();
+  constexpr auto seq = std::make_index_sequence<3>();
 
   Benchmark<int16_t>(seq);
   Benchmark<int32_t>(seq);
@@ -63,7 +63,7 @@ int main(int argc, const char** args)
   return 0;
 }
 
-template <the_grumpy_coda::NetworkType NT, typename Comp, typename T, size_t N>
+template<tcc::NetworkType NT, typename Comp, typename T, size_t N>
 double BenchmarkSortingNet(std::vector<std::array<T, N>> vector);
 
 template <typename T, size_t S, typename RandEngine>
@@ -82,7 +82,7 @@ void BenchmarkN()
 
   FillVectorOfArraysRandom(unsorted_data, rd);
 
-  using NT = the_grumpy_coda::NetworkType;
+  using NT = tcc::NetworkType;
 
   double bubble_sort;
   double insertion_sort;
@@ -127,12 +127,12 @@ void BenchmarkN()
   std::cout << std::endl;
 }
 
-template <the_grumpy_coda::NetworkType NT, typename Comp, typename T, size_t N>
+template<tcc::NetworkType NT, typename Comp, typename T, size_t N>
 double BenchmarkSortingNet(std::vector<std::array<T, N>> vector)
 {
   double elapsed_time = 0;
 
-  const the_grumpy_coda::SortingNetwork<N, NT> sorting_network;
+  const tcc::SortingNetwork<N, NT> sorting_network;
 
   for (auto& arr : vector)
     elapsed_time += MeasureExectionTimeMillis([&] { sorting_network(arr, Comp()); });
